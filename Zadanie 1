@@ -1,1 +1,193 @@
 
+Zadanie 1.
+/interface bridge add name=bridge1
+/interface bridge port add bridge=bridge1 interface=ether1
+/interface bridge port add bridge=bridge1 interface=ether2
+/interface bridge port add bridge=bridge1 interface=ether3
+/interface bridge port print
+
+Flags: I - INACTIVE
+ #   INTERF BRIDGE HW HORI TR TR TR FA BP EDGE POIN P FRAME-TYP
+ 0   ether1 bridge1 yes  none no no no no no auto auto 1 admit-all
+ 1 I ether2 bridge1 yes  none no no no no no auto auto 1 admit-all
+ 2 I ether3 bridge1 yes  none no no no no no auto auto 1 admit-all
+
+
+
+Zadanie 2.
+/ip address add address=192.168.254.72/25 interface=bridge1
+/ip address print
+
+
+
+Zadanie 3.
+/ip neighbor print
+
+00:0C:42:49:EF:EA
+
+
+
+Zadanie 4.
+grep -i "000C42" /usr/share/nmap/nmap-mac-prefixes
+000C42 Routerboard.com
+
+
+
+Zadanie 5.
+[admin@RB433AH] > /interface bridge set bridge1 auto-mac=no admin-mac=BA:74:11:9C:
+4E:05
+[admin@RB433AH] >   /interface bridge print
+Flags: R - RUNNING
+0 R name="bridge1" mtu=auto actual-mtu=1500 l2mtu=1522 arp=enabled
+    arp-timeout=auto mac-address=BA:74:11:9C:4E:05 protocol-mode=rstp
+    fast-forward=yes igmp-snooping=no auto-mac=no admin-mac=BA:74:11:9C:4E:05
+    ageing-time=5m priority=0x8000 max-message-age=20s forward-delay=15s
+    transmit-hold-count=6 vlan-filtering=no dhcp-snooping=no dhcpv6-snooping=no
+    ra-guard=no port-cost-mode=long max-learned-entries=auto mlag-peer-port=none
+    mlag-priority=128 mlag-heartbeat=5s
+
+
+
+Zadanie 6.
+[admin@RB433AH] > /ip neighbor discovery-settings set discover-interface-list=none
+
+[admin@RB433AH] >   /ip neighbor discovery-settings print
+   discover-interface-list: none     
+         discover-interval: 30s      
+                  lldp-med: yes      
+  lldp-med-net-policy-vlan: disabled 
+       lldp-mac-phy-config: no       
+       lldp-max-frame-size: no       
+            lldp-vlan-info: no       
+                  protocol: cdp      
+                            lldp     
+                            mndp     
+                      mode: tx-and-rx
+                dying-gasp: no       
+           add-dns-entries: no       
+    add-dns-entries-suffix: lan      
+[admin@RB433AH] > 
+
+
+
+Zadanie 7.
+[admin@RB433AH] > /tool bandwidth-server set enabled=no
+[admin@RB433AH] > /tool mac-server set allowed-interface-list=none
+[admin@RB433AH] > /tool mac-server mac-winbox set allowed-interface-list=none
+[admin@RB433AH] > /tool mac-server ping set enabled=no
+
+[admin@RB433AH] > /tool bandwidth-server print
+                  enabled: no  
+             authenticate: yes 
+  allocate-udp-ports-from: 2000
+             max-sessions: 100 
+       allowed-addresses4:     
+       allowed-addresses6:     
+
+[admin@RB433AH] > /tool mac-server print
+  allowed-interface-list: none
+[admin@RB433AH] > /tool mac-server ping print
+  enabled: no
+
+
+
+Zadanie 8.
+[admin@RB433AH] > /certificate add name=my-ca common-name="My Root CA" key-usage=key-cert-sign,crl-sign days-valid=365
+[admin@RB433AH] > /certificate sign my-ca
+  progress: done
+[admin@RB433AH] > /certificate add name=cert-ssl common-name=192.168.254.72 key-usage=digital-signature,key-encipherment,tls-server days-valid=365
+failure: Name exists, please choose another!
+[admin@RB433AH] > /certificate sign cert-ssl ca=my-ca
+  progress: done
+[admin@RB433AH] > /ip service set www-ssl certificate=cert-ssl disabled=no
+[admin@RB433AH] > /ip service print
+Flags: D - DYNAMIC
+Columns: NAME, PORT, PROTO, CERTIFICATE, VRF, MAX-SESSIONS
+#   NAME           PORT  PROTO  CERTIFICATE  VRF   MAX-SESSIONS
+0   ftp              21  tcp                 main            20
+1   ssh              22  tcp                 main            20
+2   telnet           23  tcp                 main            20
+3   www              80  tcp                 main            20
+4   reverse-proxy   443  tcp    none         main            20
+5   www-ssl         443  tcp    cert-ssl     main            20
+6 D btest          2000  tcp                                   
+7   winbox         8291  tcp                 main            20
+8   api            8728  tcp                 main            20
+9   api-ssl        8729  tcp    none         main            20
+[admin@RB433AH] > 
+
+
+
+Zadanie 9.
+[admin@RB433AH] > /ip service disable telnet,ftp,www,api,api-ssl,winbox
+[admin@RB433AH] > 
+[admin@RB433AH] > /ip service enable ssh,www-ssl 
+
+[admin@RB433AH] > /ip service print
+Flags: X - DISABLED, I - INVALID
+Columns: NAME, PORT, PROTO, AVAILABLE-FROM, CERTIFICATE, VRF, MAX-SESSIONS
+#   NAME           PORT  PROTO  AVAILABLE-FROM    CERTIFICATE  VRF   MAX-SESSIONS
+0 X ftp              21  tcp                                   main            20
+1   ssh              22  tcp    192.168.254.0/25               main            20
+2 X telnet           23  tcp                                   main            20
+3 X www              80  tcp                                   main            20
+4   reverse-proxy   443  tcp                      none         main            20
+5   www-ssl         443  tcp    192.168.254.0/25  cert-ssl     main            20
+6 X winbox         8291  tcp                                   main            20
+7 X api            8728  tcp                                   main            20
+8 X api-ssl        8729  tcp                      none         main            20
+
+
+
+Zadanie 10.
+[admin@RB433AH] > /ip ssh set strong-crypto=yes host-key-type=ed25519
+[admin@RB433AH] > /ip ssh regenerate-host-key
+This will regenerate current SSH host keys, yes? [y/N]: 
+y
+14:46:43 echo: ssh,critical SSH host key regenerated!
+[admin@RB433AH] > /ip ssh print
+                           ciphers: auto         
+                forwarding-enabled: no           
+           password-authentication: yes-if-no-key
+  publickey-authentication-options: none         
+                     strong-crypto: yes          
+                     host-key-size: 2048         
+                     host-key-type: ed25519      
+[admin@RB433AH] > 
+
+
+
+
+Zadanie 11.
+[admin@RB433AH] > /ip service set ssh address=192.168.254.0/25
+Deprecation warning:
+  address (IP address from which the service is accessible)
+Preceding keywords will be removed in future versions, please update your syntax
+[admin@RB433AH] > /ip service set www-ssl address=192.168.254.0/25
+[admin@RB433AH] > /ip service print
+Flags: D - DYNAMIC
+Columns: NAME, PORT, PROTO, AVAILABLE-FROM, CERTIFICATE, VRF, MAX-SESSIONS
+#   NAME           PORT  PROTO  AVAILABLE-FROM    CERTIFICATE  VRF   MAX-SESSIONS
+0   ftp              21  tcp                                   main            20
+1   ssh              22  tcp    192.168.254.0/25               main            20
+2   telnet           23  tcp                                   main            20
+3   www              80  tcp                                   main            20
+4   reverse-proxy   443  tcp                      none         main            20
+5   www-ssl         443  tcp    192.168.254.0/25  cert-ssl     main            20
+6 D btest          2000  tcp                                                     
+7   winbox         8291  tcp                                   main            20
+8   api            8728  tcp                                   main            20
+9   api-ssl        8729  tcp                      none         main            20
+
+
+
+Zadanie 12.
+Konsola szeregowa i obsługa LCD:
+Wyciszenie dostępu przez fizyczny port szeregowy lub wyświetlacz.
+[admin@RB433AH] > /system console disable [find]
+[admin@RB433AH] > /system console print
+Flags: * - DEFAULT; X - DISABLED
+Columns: PORT, TERM
+#    PORT     TERM 
+0 *X serial0  vt102
+[admin@RB433AH] > 
